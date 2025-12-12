@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Facebook SDK Test – Maryam</title>
+</head>
+<body>
+  <h1>اختبار Facebook SDK على Netlify</h1>
+
+  <!-- لازم يكون موجود -->
+  <div id="fb-root"></div>
+
+  <!-- زر تسجيل الدخول -->
+  <fb:login-button
+    scope="public_profile,email"
+    onlogin="checkLoginState();">
+  </fb:login-button>
+
+  <!-- لعرض نتيجة تسجيل الدخول -->
+  <pre id="status"></pre>
+
+  <script>
+    // تُستدعى بعد الضغط على زر login
+    function checkLoginState() {
+      FB.getLoginStatus(function(response) {
+        document.getElementById('status').textContent =
+          JSON.stringify(response, null, 2);
+      });
+    }
+
+    // تهيئة الـ SDK
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '1319175589674080',   // App ID الخاص بك
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v24.0'
+      });
+
+      FB.AppEvents.logPageView();
+    };
+
+    // تحميل SDK من فيسبوك
+    (function(d, s, id){
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) {return;}
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  </script>
+</body>
+</html>
