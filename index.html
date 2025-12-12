@@ -1,11 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>Facebook SDK Test – Maryam</title>
+  <title>اختبار Facebook SDK – عرض بيانات المستخدم</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #f5f6f7;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 16px;
+    }
+    #user-info {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      max-width: 400px;
+    }
+    #user-info img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-left: 12px;
+    }
+    #user-info .row {
+      display: flex;
+      align-items: center;
+    }
+    #user-info p {
+      margin: 2px 0;
+      font-size: 14px;
+    }
+    #status {
+      margin-top: 16px;
+      padding: 8px;
+      background: #111827;
+      color: #e5e7eb;
+      border-radius: 6px;
+      font-size: 12px;
+      direction: ltr;
+      max-width: 500px;
+      overflow-x: auto;
+    }
+  </style>
 </head>
 <body>
-  <h1>اختبار Facebook SDK على Netlify</h1>
+  <h1>اختبار Facebook SDK على Netlify – عرض بيانات المستخدم</h1>
 
   <!-- لازم يكون موجود -->
   <div id="fb-root"></div>
@@ -16,16 +62,71 @@
     onlogin="checkLoginState();">
   </fb:login-button>
 
-  <!-- لعرض نتيجة تسجيل الدخول -->
-  <pre id="status"></pre>
+  <!-- بطاقة بيانات المستخدم -->
+  <div id="user-info" style="display:none;">
+    <div class="row">
+      <img id="user-picture" src="" alt="صورة المستخدم">
+      <div>
+        <p id="user-name"></p>
+        <p id="user-email"></p>
+        <p id="user-id"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- لعرض نتيجة الاستاتس (للاختبار) -->
+  <pre id="status">{ "status": "waiting..." }</pre>
 
   <script>
+    // تعالج نتيجة FB.getLoginStatus
+    function statusChangeCallback(response) {
+      // عرض الـ JSON الخام للفحص
+      document.getElementById('status').textContent =
+        JSON.stringify(response, null, 2);
+
+      if (response.status === 'connected') {
+        // لو متصل بالتطبيق → هات بياناته
+        fetchUserData();
+      } else {
+        // إخفاء بيانات المستخدم لو غير مسجّل
+        hideUserInfo();
+      }
+    }
+
     // تُستدعى بعد الضغط على زر login
     function checkLoginState() {
       FB.getLoginStatus(function(response) {
-        document.getElementById('status').textContent =
-          JSON.stringify(response, null, 2);
+        statusChangeCallback(response);
       });
+    }
+
+    // جلب بيانات المستخدم من Graph API
+    function fetchUserData() {
+      FB.api('/me', { fields: 'id,name,email,picture.width(200).height(200)' }, function(user) {
+        if (!user || user.error) {
+          console.log('Error getting user data', user);
+          return;
+        }
+
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('user-name').textContent  = 'الاسم: ' + (user.name || 'غير متاح');
+        document.getElementById('user-email').textContent = user.email
+          ? 'البريد الإلكتروني: ' + user.email
+          : 'لا يوجد بريد إلكتروني متاح';
+        document.getElementById('user-id').textContent    = 'معرّف المستخدم (ID): ' + user.id;
+
+        if (user.picture && user.picture.data && user.picture.data.url) {
+          document.getElementById('user-picture').src = user.picture.data.url;
+        }
+      });
+    }
+
+    function hideUserInfo() {
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('user-picture').src = '';
+      document.getElementById('user-name').textContent  = '';
+      document.getElementById('user-email').textContent = '';
+      document.getElementById('user-id').textContent    = '';
     }
 
     // تهيئة الـ SDK
@@ -35,6 +136,11 @@
         cookie     : true,
         xfbml      : true,
         version    : 'v24.0'
+      });
+
+      // فحص حالة تسجيل الدخول عند فتح الصفحة
+      FB.getLoginStatus(function(response) {
+        statusChangeCallback(response);
       });
 
       FB.AppEvents.logPageView();
